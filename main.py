@@ -62,8 +62,8 @@ def read_github_and_reddit_data(con, curr):
 
     conn = con
     c = curr
-    c.execute(f"DROP TABLE {table_name}")
-    c.execute(f"DROP TABLE {table_name_reddit}")
+    #c.execute(f"DROP TABLE {table_name}")
+    #c.execute(f"DROP TABLE {table_name_reddit}")
 
     c.execute(
         f"CREATE TABLE IF NOT EXISTS {table_name} (id INTEGER PRIMARY KEY, Username TEXT, location TEXT, Followersnum TEXT, Followingnum TEXT, Repos TEXT)")
@@ -96,8 +96,8 @@ def read_github_and_reddit_data(con, curr):
         user_url = user['html_url']
 
         # Now we add the user in the database
-        c.execute(f"INSERT OR IGNORE INTO {table_name} (id,Username,user_location,Followersnum,Followingnum, Repos) VALUES (?,?,?,?,?,?)",
-                  (user_id, user_login,user_followers, user_following, user_repos))
+        c.execute(f"INSERT OR IGNORE INTO {table_name} (id,Username,location,Followersnum,Followingnum, Repos) VALUES (?,?,?,?,?,?)",
+                  (user_id, user_login,user_location,user_followers, user_following, user_repos))
         if redditinfo[0] == 1:
             c.execute(
                 f"INSERT OR IGNORE INTO {table_name_reddit} (id, Link_Karma, Comment_karma, Post_number) VALUES (?, ?, ?, ?)",

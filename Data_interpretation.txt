@@ -1,0 +1,9 @@
+First we want to calculate each out of how many github accounts we find, what percentage of them possess reddit accounts
+From the data we can assess that out of 25 github user accounts 0.72 percent of them have reddit accounts
+Next we want to calculate the spread of locations of the github users, to see which area is most popular
+(Bend, OR),(Lawton, OK),(Rochester, NY),(Berkeley, CA),(San Fransico, CA),(Madison, WI, NORTH AMERICA),(Berlin, Germany),(Oslo, Norway),(Dallas, TX),(Berkshire, England),(Pōneke, Aotearoa),(NYC),(San Francisco),(Skipton, UK),(New York City),(Sevilla, Spain),(Austin, TX),(Portland, OR),(San Francisco, CA),(None),
+(1),(1),(1),(1),(1),(1),(1),(1),(1),(1),(1),(1),(1),(1),(1),(1),(2),(2),(2),(3),
+As we can see, the location with the greatest concentration of users for this dataset is None with 3 occurances our datasize
+Finally, we are going to calculate which location, on average recieves the most karma per user
+The following are the results:(None),(Berlin, Germany),(Berkshire, England),(San Francisco, CA),(Rochester, NY),(San Francisco),(Dallas, TX),(Pōneke, Aotearoa),(Lawton, OK),(Austin, TX),(Skipton, UK),(Madison, WI, NORTH AMERICA),(Berkeley, CA),(Oslo, Norway),(Portland, OR),
+(0),(1),(1),(1),(4),(6),(58),(58),(87),(94),(693),(1236),(1693),(4442),(12033),On average per user for this dataset is the region highest amount of karma per user is Portland, OR with 12033 karma per user

@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 
 # This function essentiallys gets all the reddit info after using the key
 
+
 def search_reddit_by_user(username):
     finlist = []
     reddit = praw.Reddit(client_id='npRg-arfVu4FaYFqctuZNQ',
@@ -53,31 +54,42 @@ def search_reddit_by_user(username):
 
 
 
-def read_github_and_reddit_data(con, curr):
+def read_github_and_reddit_data(conn, curr):
+    table_name_track = "Tracker"
+    curr.execute(
+        f"CREATE TABLE IF NOT EXISTS {table_name_track} (Last_num TEXT)")
+    curr.execute("SELECT * FROM Tracker")
+    ids_list = curr.fetchall()
+    track = 0
+    if not ids_list:
+        track = 0
+    else:
+        track = int(ids_list[len(ids_list)-1])
+
     print("we reading github")
     url = 'https://api.github.com/users'
     database_name = 'github_users.db'
     table_name = 'Users'
+    table_name2 = "User_gist_data"
     table_name_reddit = "Reddit_info"
 
-    conn = con
-    c = curr
-    #c.execute(f"DROP TABLE {table_name}")
-    #c.execute(f"DROP TABLE {table_name_reddit}")
+    #curr.execute(f"DROP TABLE {table_name}")
+    #curr.execute(f"DROP TABLE {table_name_reddit}")
+    curr.execute(
+        f"CREATE TABLE IF NOT EXISTS {table_name2} (id INTEGER PRIMARY KEY, Username TEXT, location TEXT, Followersnum TEXT, Followingnum TEXT, Repos TEXT)")
 
-    c.execute(
+    curr.execute(
         f"CREATE TABLE IF NOT EXISTS {table_name} (id INTEGER PRIMARY KEY, Username TEXT, location TEXT, Followersnum TEXT, Followingnum TEXT, Repos TEXT)")
 
-    c.execute(
+    curr.execute(
         f"CREATE TABLE IF NOT EXISTS {table_name_reddit} (id INTEGER PRIMARY KEY, Link_Karma TEXT, Comment_karma TEXT, Post_number TEXT)")
-
-    params = {"per_page": 25}
+    params = {"per_page": 25, "since": track}
     response = requests.get(url, params=params)
     users = response.json()
-    limiter = 0
+    print(users)
+    print(len(users))
+    last_id = None
     for user in users:
-        if limiter == 25:
-            break
         print("----------")
         userdata = requests.get(url + "/" + user["login"])
         user1 = userdata.json()
@@ -94,16 +106,19 @@ def read_github_and_reddit_data(con, curr):
         # If the reddit user exists, we add that bad boy to the database within the function, otherwise no go bro :(
         redditinfo = search_reddit_by_user(user_login)
         user_url = user['html_url']
+        last_id=user_id
 
         # Now we add the user in the database
-        c.execute(f"INSERT OR IGNORE INTO {table_name} (id,Username,location,Followersnum,Followingnum, Repos) VALUES (?,?,?,?,?,?)",
+        curr.execute(f"INSERT OR IGNORE INTO {table_name} (id,Username,location,Followersnum,Followingnum, Repos) VALUES (?,?,?,?,?,?)",
                   (user_id, user_login,user_location,user_followers, user_following, user_repos))
         if redditinfo[0] == 1:
-            c.execute(
+            curr.execute(
                 f"INSERT OR IGNORE INTO {table_name_reddit} (id, Link_Karma, Comment_karma, Post_number) VALUES (?, ?, ?, ?)",
                 (user_id, redditinfo[1], redditinfo[2], redditinfo[3]))
-
-        limiter = limiter + 1
+    print(last_id)
+    curr.execute(
+        f"INSERT OR IGNORE INTO {table_name_track} (Last_num) VALUES (?)",
+        last_id)
 
     conn.commit()
 

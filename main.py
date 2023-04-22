@@ -24,13 +24,28 @@ import matplotlib.pyplot as plt
 # This function essentiallys gets all the reddit info after using the key
 
 
-def search_reddit_by_user(username):
+def search_reddit_by_user(username,conn,curr):
+
+    table_name = "Sub_reddits"
     finlist = []
     reddit = praw.Reddit(client_id='npRg-arfVu4FaYFqctuZNQ',
                          client_secret='gxLxmBpZ7CU3dhol-3rW4HX_Gd_N6Q',
                          username='UMichDev',
                          password='Megabhyfc12',
                          user_agent='MYAPI/0.01')
+
+    curr.execute(
+        f"CREATE TABLE IF NOT EXISTS {table_name} (title TEXT)")
+
+    subreddit_name = reddit.subreddit("learnpython").random().name
+
+    #print(subreddit_name)
+    curr.execute(
+        f"INSERT OR IGNORE INTO {table_name} (title) VALUES (?)",
+        ([str(subreddit_name)]))
+    conn.commit()
+
+
     try:
         user = reddit.redditor(username)
         user_id = user.id
@@ -44,7 +59,7 @@ def search_reddit_by_user(username):
         finlist.append(link_karma)
         finlist.append(comment_karma)
         finlist.append(num_posts)
-        print(link_karma)
+        #print(link_karma)
 
         return finlist
     except:
@@ -55,7 +70,19 @@ def search_reddit_by_user(username):
 
 
 def read_github_and_reddit_data(conn, curr):
+    table_name_ouut = "Sub_reddits"
+
+    #curr.execute(f"DROP TABLE {table_name_ouut}")
+    table_name = 'Users'
+    table_name2 = "User_gist_repo_data"
+    table_name_reddit = "Reddit_info"
     table_name_track = "Tracker"
+    #curr.execute(f"DROP TABLE {table_name_reddit}")
+    #curr.execute(f"DROP TABLE {table_name}")
+    #curr.execute(f"DROP TABLE {table_name2}")
+    #curr.execute(f"DROP TABLE {table_name_track}")
+    #print(estaban)
+
     curr.execute(
         f"CREATE TABLE IF NOT EXISTS {table_name_track} (Last_num TEXT)")
     curr.execute("SELECT * FROM Tracker")
@@ -64,19 +91,17 @@ def read_github_and_reddit_data(conn, curr):
     if not ids_list:
         track = 0
     else:
-        track = int(ids_list[len(ids_list)-1])
+        #print(ids_list[len(ids_list)-1][0])
+        track = int(ids_list[len(ids_list)-1][0])
 
-    print("we reading github")
+    #print("we reading github")
     url = 'https://api.github.com/users'
     database_name = 'github_users.db'
-    table_name = 'Users'
-    table_name2 = "User_gist_data"
-    table_name_reddit = "Reddit_info"
 
-    #curr.execute(f"DROP TABLE {table_name}")
-    #curr.execute(f"DROP TABLE {table_name_reddit}")
+
+
     curr.execute(
-        f"CREATE TABLE IF NOT EXISTS {table_name2} (id INTEGER PRIMARY KEY, Username TEXT, location TEXT, Followersnum TEXT, Followingnum TEXT, Repos TEXT)")
+        f"CREATE TABLE IF NOT EXISTS {table_name2} (id INTEGER PRIMARY KEY, pub_gists INTEGER, pub_repos INTEGER, gist_url TEXT)")
 
     curr.execute(
         f"CREATE TABLE IF NOT EXISTS {table_name} (id INTEGER PRIMARY KEY, Username TEXT, location TEXT, Followersnum TEXT, Followingnum TEXT, Repos TEXT)")
@@ -86,39 +111,51 @@ def read_github_and_reddit_data(conn, curr):
     params = {"per_page": 25, "since": track}
     response = requests.get(url, params=params)
     users = response.json()
-    print(users)
-    print(len(users))
+    #print(users)
+    #print(len(users))
     last_id = None
     for user in users:
-        print("----------")
+        #print("----------")
         userdata = requests.get(url + "/" + user["login"])
         user1 = userdata.json()
-        print(user1)
+        #print(user1)
         # Get user data from JSON response
         user_id = user['id']
         user_login = user['login']
         user_twitter = user1['twitter_username']
         user_followers = user1["following"]
         user_following = user1["followers"]
+
+        user_pub_gist = user1["public_gists"]
+        user_pub_repo = user1["public_repos"]
+        user_git_url = user1["gists_url"]
+
+
         user_location = user1["location"]
         user_repos = user1["public_repos"]
         user_bio = user1["bio"]
         # If the reddit user exists, we add that bad boy to the database within the function, otherwise no go bro :(
-        redditinfo = search_reddit_by_user(user_login)
+        redditinfo = search_reddit_by_user(user_login,conn,curr)
         user_url = user['html_url']
         last_id=user_id
 
         # Now we add the user in the database
         curr.execute(f"INSERT OR IGNORE INTO {table_name} (id,Username,location,Followersnum,Followingnum, Repos) VALUES (?,?,?,?,?,?)",
                   (user_id, user_login,user_location,user_followers, user_following, user_repos))
+        curr.execute(
+            f"INSERT OR IGNORE INTO {table_name2} (id, pub_gists, pub_repos, gist_url) VALUES (?, ?, ?, ?)",
+            (user_id, user_pub_gist, user_pub_repo, user_git_url))
         if redditinfo[0] == 1:
             curr.execute(
                 f"INSERT OR IGNORE INTO {table_name_reddit} (id, Link_Karma, Comment_karma, Post_number) VALUES (?, ?, ?, ?)",
                 (user_id, redditinfo[1], redditinfo[2], redditinfo[3]))
-    print(last_id)
+    #print(last_id)
     curr.execute(
         f"INSERT OR IGNORE INTO {table_name_track} (Last_num) VALUES (?)",
-        last_id)
+        ([str(last_id)]))
+
+
+
 
     conn.commit()
 
@@ -140,6 +177,13 @@ def main():
     cur.execute("SELECT * FROM Users")
     players_list = cur.fetchall()
     print(players_list)
+    cur.execute("SELECT * FROM Sub_reddits")
+    players_list = cur.fetchall()
+    print("--")
+    print(players_list)
+    print(len(players_list))
+    print("--")
+
     conn.close()
 
 

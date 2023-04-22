@@ -40,6 +40,7 @@ def calculate_reddit_github_ratio(cur,conn):
     labels = ['Github Users with Reddit', 'Github Users without Reddit']
     sizes = [len(reddit_list)/len(Users_list), 1-len(reddit_list)/len(Users_list)]
     fig1, ax1 = plt.subplots()
+
     ax1.pie(sizes, labels=labels, autopct='%1.1f%%', startangle=90)
 
     ax1.set_title('Reddit Vs No Reddit')
@@ -75,8 +76,9 @@ def calculate_location_ratio(cur,conn):
             newcat.append(cate)
     print(newcat)
     colors = rainbow_colors(len(newvals))
+    plt.figure(figsize=(20, 15))
     plt.barh(newcat, newvals, color=colors)
-    plt.title('Caluclates Which location is most prevelate on github')
+    plt.title('Caluclates Which location is most prevalant on github')
     plt.xlabel('Value')
     plt.ylabel('Category')
     plt.show()
@@ -112,7 +114,14 @@ def calculate_location_reddit_karma_ratio(cur,conn):
         fin_dict[data[0]]=fin_dict[data[0]]+int(data[1])
     #average out the data
     for item,val in fin_dict.items():
+        print("before:")
+        print(fin_dict[item])
+        print("divided by ")
+        print(counts[item])
+        print("after")
+        print(round(fin_dict[item]/counts[item]))
         fin_dict[item]=round(fin_dict[item]/counts[item])
+
     fin_dict = dict(sorted(fin_dict.items(), key=lambda x: x[1]))
     categories = list(fin_dict.keys())
     values = list(fin_dict.values())
@@ -120,8 +129,6 @@ def calculate_location_reddit_karma_ratio(cur,conn):
     for i in range(len(values)):
         newvals.append(str(values[i]))
 
-    print(newvals)
-    print(categories)
     newcat = []
     for cate in categories:
         if cate == None:
@@ -131,6 +138,7 @@ def calculate_location_reddit_karma_ratio(cur,conn):
     print(newcat)
     colors = rainbow_colors(len(newvals))
     print(colors)
+    plt.figure(figsize=(25, 15))
     plt.barh(newcat, newvals, color=colors)
     plt.title('Calculates Which location get the most karma on average')
     plt.xlabel('Value')
@@ -168,6 +176,7 @@ def run_and_write_to_file():
         file.write('Finally, we are going to calculate which location, on average recieves the most karma per user')
         file.write('\n')
         file.write(f'The following are the results:')
+        file.write('\n')
         dicct2 = calculate_location_reddit_karma_ratio(cur, conn)
         for key, value in dicct2.items():
             file.write("("+str(key)+"),")
@@ -176,6 +185,7 @@ def run_and_write_to_file():
         for key, value in dicct2.items():
             file.write("("+str(value)+"),")
             fin_val = str(value)
+        file.write('\n')
 
         file.write(
             f'On average per user for this dataset is the region highest amount of karma per user is {fin_name} with {fin_val} karma per user')
